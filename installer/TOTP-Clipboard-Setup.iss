@@ -17,7 +17,7 @@
 ; ===========================================================================
 
 #define MyAppName "TOTP Clipboard"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Rohit"
 #define MyAppExeName "TOTP-Clipboard.exe"
 #define MyAppURL ""
@@ -41,7 +41,7 @@ DisableProgramGroupPage=yes
 ; Allow non-admin "install for me only" as well as admin "install for all users"
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-OutputDir=.\Output
+OutputDir=..\dist
 OutputBaseFilename=TOTP-Clipboard-Setup-{#MyAppVersion}
 Compression=lzma2
 SolidCompression=yes
@@ -65,7 +65,7 @@ Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription
 Name: "startupicon"; Description: "Start {#MyAppName} automatically when Windows starts (minimized to tray)"; GroupDescription: "Startup:"; Flags: unchecked
 
 [Files]
-Source: "..\dist_temp\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#ExeDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 ; Bundle the icon alongside the exe too, in case anything outside the exe
 ; payload wants to reference it (shortcuts use it directly from the exe below).
 Source: "..\app.ico"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist

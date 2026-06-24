@@ -32,12 +32,14 @@ It uses Python, Tkinter, PyOTP, and pystray. Profiles and secrets are stored onl
 
 ```text
 totp-clipboard/
+|-- installer/
+|   `-- TOTP-Clipboard-Setup.iss
 |-- main.py
 |-- ui.py
 |-- profile_manager.py
 |-- otp_service.py
 |-- tray.py
-|-- profiles.json
+|-- build.ps1
 |-- requirements.txt
 |-- .gitignore
 `-- README.md
@@ -45,13 +47,13 @@ totp-clipboard/
 
 ## Profile Format
 
-Profiles are stored in:
+Profiles are securely stored in:
 
 ```text
-%APPDATA%\TOTP Clipboard\profiles.json
+%APPDATA%\TOTP Clipboard\profiles.dat
 ```
 
-This keeps data safe across PyInstaller one-file app restarts. If an older `profiles.json` exists beside the source files or beside the `.exe`, the app migrates it into the AppData location on first launch.
+The data is encrypted at rest using Windows DPAPI. This keeps data safe across PyInstaller one-file app restarts. If an older plain text `profiles.json` exists beside the source files, beside the `.exe`, or in the AppData directory, the app migrates it into the new encrypted `.dat` format on first launch.
 
 Profile data format:
 
@@ -95,18 +97,22 @@ Create the executable:
 pyinstaller --onefile --windowed --name TOTP-Clipboard main.py
 ```
 
-For this project, the included PowerShell script is preferred because it also bundles Tcl/Tk correctly for Tkinter:
+For this project, simply run the included PowerShell script to compile everything into a permanent setup installer:
 
 ```powershell
-.\build_exe.ps1
+.\build.ps1
 ```
 
 Expected output:
 
 ```text
 dist/
-`-- TOTP-Clipboard.exe
+`-- TOTP-Clipboard-Setup-1.0.1.exe
 ```
+
+## Installation
+
+Once the setup executable is built, simply double-click the `TOTP-Clipboard-Setup-1.0.1.exe` in your `dist/` folder. It will guide you through installing the application permanently to your system and creating Start Menu or Desktop shortcuts.
 
 ## Import and Export
 
@@ -120,6 +126,6 @@ dist/
 - It does not make network calls.
 - It does not collect telemetry or analytics.
 - It does not use cloud storage or external APIs.
-- Secrets remain in `%APPDATA%\TOTP Clipboard\profiles.json` on the machine where the app runs.
+- Secrets are encrypted using Windows DPAPI via `win32crypt` and stored in `%APPDATA%\TOTP Clipboard\profiles.dat`. They can only be decrypted by the Windows user account that encrypted them.
 
-Protect `profiles.json` and exported profile files with normal OS file permissions and disk encryption where appropriate.
+Protect exported profile files with normal OS file permissions and disk encryption where appropriate.

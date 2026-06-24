@@ -588,15 +588,25 @@ class TOTPClipboardApp:
             pw_wrap,
             textvariable=self.generated_var,
             font=(MONO_FAMILY, 14),
-            state="readonly",
-            readonlybackground=ELEVATED_2,
+            bg=ELEVATED_2,
             fg=TEXT_PRIMARY,
             relief="flat",
             highlightthickness=0,
             bd=0,
             justify="left",
+            show="*",
         )
-        self.password_entry.pack(fill="x", padx=12, pady=10)
+        self.password_entry.bind("<Key>", lambda e: "break" if e.state & 4 == 0 or e.keysym.lower() != 'c' else None)
+
+        self.password_entry.pack(side="left", fill="x", expand=True, padx=12, pady=10)
+
+        self.pw_mask_state = True
+        def toggle_pw_mask():
+            self.pw_mask_state = not self.pw_mask_state
+            self.password_entry.config(show="*" if self.pw_mask_state else "")
+
+        FlatButton(pw_wrap, "👁", command=toggle_pw_mask, kind="ghost",
+                   width=30, height=26, font_size=10, anchor_bg=ELEVATED_2).pack(side="right", padx=(0, 6))
 
         # ===== ACTION BUTTONS =====
         btn_row = tk.Frame(totp_body, bg=ELEVATED)
@@ -887,8 +897,8 @@ class ProfileDialog(tk.Toplevel):
         ttk.Label(frame, text=title, background=ELEVATED, foreground=TEXT_PRIMARY,
                   font=(FONT_FAMILY, 15, "bold")).pack(anchor="w", pady=(0, 16))
         self._entry(frame, "Name", self.name_var)
-        self._entry(frame, "Base Text", self.base_var)
-        self._entry(frame, "Base32 Secret", self.secret_var, show="")
+        self._entry(frame, "Base Text", self.base_var, show="*")
+        self._entry(frame, "Base32 Secret", self.secret_var, show="*")
 
         button_row = tk.Frame(frame, bg=ELEVATED)
         button_row.pack(fill="x", pady=(20, 0))
@@ -921,7 +931,15 @@ class ProfileDialog(tk.Toplevel):
             bg=ELEVATED_2, fg=TEXT_PRIMARY, insertbackground=TEXT_PRIMARY,
             relief="flat", highlightthickness=0, bd=0, font=(FONT_FAMILY, 10),
         )
-        entry.pack(fill="x", padx=10, pady=8)
+        if show is not None:
+            entry.pack(side="left", fill="x", expand=True, padx=10, pady=8)
+            def toggle_show(e=entry, s=show):
+                current = e.cget("show")
+                e.config(show="" if current == s else s)
+            FlatButton(wrap, "👁", command=toggle_show, kind="ghost",
+                       width=30, height=26, font_size=10, anchor_bg=ELEVATED_2).pack(side="right", padx=(0, 6))
+        else:
+            entry.pack(fill="x", padx=10, pady=8)
 
     def save(self) -> None:
         try:

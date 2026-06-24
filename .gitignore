@@ -7,11 +7,22 @@ venv/
 env/
 
 build/
+build_*/
 dist/
+dist_temp/
 *.spec
 
+# Installer output
+installer/Output/
+
+# User data
+profiles.json
+profiles.dat
 profiles_export.json
 *.invalid.json
+
+# Scratch files
+test_mask.py
 
 .idea/
 .vscode/

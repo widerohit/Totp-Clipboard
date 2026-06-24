@@ -10,12 +10,14 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+import win32crypt
+
 from otp_service import validate_secret
 
 
 APP_DIR = Path(__file__).resolve().parent
 APP_DATA_DIR = Path(os.environ.get("APPDATA", Path.home())) / "TOTP Clipboard"
-DEFAULT_PROFILES_FILE = APP_DATA_DIR / "profiles.json"
+DEFAULT_PROFILES_FILE = APP_DATA_DIR / "profiles.dat"
 DEFAULT_EXPORT_FILE = APP_DATA_DIR / "profiles_export.json"
 
 
@@ -61,11 +63,13 @@ class ProfileManager:
             return
 
         try:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            backup = self.path.with_suffix(".invalid.json")
+            encrypted_data = self.path.read_bytes()
+            _, decrypted_data = win32crypt.CryptUnprotectData(encrypted_data, None, None, None, 0)
+            raw = json.loads(decrypted_data.decode("utf-8"))
+        except Exception as exc:
+            backup = self.path.with_suffix(".invalid.dat")
             shutil.copy2(self.path, backup)
-            raise ValueError(f"profiles.json is invalid. Backup created at {backup}.") from exc
+            raise ValueError(f"{self.path.name} is invalid. Backup created at {backup}.") from exc
 
         if isinstance(raw, list):
             profile_items = raw
@@ -74,7 +78,7 @@ class ProfileManager:
             profile_items = raw.get("profiles", [])
             settings = raw.get("settings", {})
         else:
-            raise ValueError("profiles.json must contain a JSON object or array.")
+            raise ValueError(f"{self.path.name} must contain a JSON object or array.")
 
         self.profiles = [Profile.from_dict(item) for item in profile_items if isinstance(item, dict)]
         self.active_profile_name = str(settings.get("activeProfile", "")).strip()
@@ -94,7 +98,9 @@ class ProfileManager:
             },
             "profiles": [asdict(profile) for profile in self.profiles],
         }
-        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        json_str = json.dumps(data, indent=2)
+        encrypted_data = win32crypt.CryptProtectData(json_str.encode("utf-8"), "TOTP Profiles")
+        self.path.write_bytes(encrypted_data)
 
     @property
     def names(self) -> list[str]:
@@ -181,11 +187,17 @@ class ProfileManager:
         if self.path.exists():
             return
 
-        candidates = [APP_DIR / "profiles.json"]
+        candidates = [self.path.with_name("profiles.json"), APP_DIR / "profiles.json"]
         if getattr(sys, "frozen", False):
             candidates.insert(0, Path(sys.executable).resolve().parent / "profiles.json")
 
         for candidate in candidates:
             if candidate.exists() and candidate.resolve() != self.path.resolve():
-                self.path.write_text(candidate.read_text(encoding="utf-8"), encoding="utf-8")
-                return
+                try:
+                    json_str = candidate.read_text(encoding="utf-8")
+                    json.loads(json_str)  # Verify it's valid JSON
+                    encrypted_data = win32crypt.CryptProtectData(json_str.encode("utf-8"), "TOTP Profiles")
+                    self.path.write_bytes(encrypted_data)
+                    return
+                except Exception:
+                    continue
