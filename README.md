@@ -55,23 +55,7 @@ Profiles are securely stored in:
 
 The data is encrypted at rest using Windows DPAPI. This keeps data safe across PyInstaller one-file app restarts. If an older plain text `profiles.json` exists beside the source files, beside the `.exe`, or in the AppData directory, the app migrates it into the new encrypted `.dat` format on first launch.
 
-Profile data format:
 
-```json
-{
-  "settings": {
-    "activeProfile": "VPN",
-    "autoCopyOnLaunch": false
-  },
-  "profiles": [
-    {
-      "name": "VPN",
-      "baseText": "TEST",
-      "secret": "JBSWY3DPEHPK3PXP"
-    }
-  ]
-}
-```
 
 ## Run From Source
 
