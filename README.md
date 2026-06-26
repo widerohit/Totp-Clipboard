@@ -113,3 +113,34 @@ Once the setup executable is built, simply double-click the `TOTP-Clipboard-Setu
 - Secrets are encrypted using Windows DPAPI via `win32crypt` and stored in `%APPDATA%\TOTP Clipboard\profiles.dat`. They can only be decrypted by the Windows user account that encrypted them.
 
 Protect exported profile files with normal OS file permissions and disk encryption where appropriate.
+
+
+## How I Use It
+
+This utility was built for an environment where passwords consist of a fixed text portion followed by a time-based OTP.
+
+For additional security, I do **not** store my complete password in the application. Instead, I intentionally omit the first character of the fixed portion.
+
+Example:
+
+Stored Base Text:
+
+```text
+EST
+```
+
+Generated TOTP:
+
+```text
+123456
+```
+
+Copied Value:
+
+```text
+EST123456
+```
+
+When logging in, I manually type the missing first character in the password field and then paste the generated value from the clipboard.
+
+This means the complete password is never stored in the application, profile data, exported files, or clipboard output.
